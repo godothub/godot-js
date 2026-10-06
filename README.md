@@ -17,8 +17,8 @@ Windows x64、Linux x64、macOS arm64、Android arm64、iOS arm64，生成
 `godot-js.zip` 和 `GODE-SOURCE-COMMIT.txt` artifact。
 
 解压插件到项目的 `addons/godot-js`，在 Godot 插件设置中启用 godot-js。
-完整 Gode 和 godot-js 使用相同的 Godot 类注册和 JS 绑定，不能在同一项目
-同时启用。JS/TS 的 `godot` 模块及已有绑定保持兼容。
+完整 Gode 和 godot-js 使用相同的 Godot 类注册和 JS 绑定，同一项目
+只安装其中一个插件。JS/TS 的 `godot` 模块及已有绑定保持兼容。
 
 ## Lite 能力
 
