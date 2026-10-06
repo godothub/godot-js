@@ -1,0 +1,5 @@
+addons/godot-js/binary/*/
+addons/godot-js/types/
+addons/godot-js/tsc/
+*.import
+.DS_Store
