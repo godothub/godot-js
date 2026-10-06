@@ -28,7 +28,8 @@ jobs:
         - platform: windows
           arch: x64
           runner: windows-2022
-          script: ./shell/build-windows.ps1 -Architecture x64 -Configuration Release -Fresh
+          script: ./shell/build-windows.ps1 -Architecture x64 -Configuration Release
+            -Fresh
           artifact_path: third/godot-js/addons/godot-js/binary/windows/x64/libgode_runtime.dll
           editor_artifact_path: third/godot-js/addons/godot-js/binary/editor/windows/x64/libgode_editor.dll
         - platform: linux
@@ -40,13 +41,15 @@ jobs:
         - platform: macos
           arch: arm64
           runner: macos-26
-          script: ./shell/build-macos.sh --arch arm64 --config Release --deployment-target 10.15 --fresh
+          script: ./shell/build-macos.sh --arch arm64 --config Release --deployment-target
+            10.15 --fresh
           artifact_path: third/godot-js/addons/godot-js/binary/macos/arm64/libgode_runtime.dylib
           editor_artifact_path: third/godot-js/addons/godot-js/binary/editor/macos/arm64/libgode_editor.dylib
         - platform: ios
           arch: arm64
           runner: macos-26
-          script: ./shell/build-ios.sh --arch arm64 --config Release --deployment-target 16.0 --fresh
+          script: ./shell/build-ios.sh --arch arm64 --config Release --deployment-target
+            16.0 --fresh
           artifact_path: third/godot-js/addons/godot-js/binary/ios/arm64/libgode_runtime.dylib
           editor_artifact_path: ''
         - platform: android
@@ -179,3 +182,54 @@ jobs:
           dist/godot-js.zip
           dist/GODE-SOURCE-COMMIT.txt
         if-no-files-found: error
+  smoke:
+    name: Godot Lite / ${{ matrix.platform }}
+    needs: package
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - platform: linux
+          runner: ubuntu-22.04
+        - platform: windows
+          runner: windows-2022
+        - platform: macos
+          runner: macos-26
+    steps:
+    - name: Checkout canonical tests
+      uses: actions/checkout@v6
+      with:
+        repository: godothub/gode
+        ref: ${{ inputs.gode_ref || 'main' }}
+    - name: Setup Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Download plugin
+      uses: actions/download-artifact@v8
+      with:
+        name: godot-js
+        path: ${{ runner.temp }}/godot-js-package
+    - name: Prepare Godot
+      shell: bash
+      run: python test/prepare_godot.py --version "$GODOT_VERSION"
+    - name: Prepare Lite project
+      shell: bash
+      run: python .github/shell/prepare-godot-js-smoke.py --archive "$RUNNER_TEMP/godot-js-package/godot-js.zip"
+        --project "$RUNNER_TEMP/godot-js-smoke"
+    - name: Test bindings and pure JS npm
+      shell: bash
+      run: |-
+        python test/run_godot_smoke.py \
+          --godot "$GODOT_BIN" --project "$RUNNER_TEMP/godot-js-smoke" \
+          --extension res://addons/godot-js/binary/gode.gdextension \
+          --editor-extension res://addons/godot-js/binary/gode_editor.gdextension \
+          --strict-exit-leaks
+        python test/run_godot_smoke.py \
+          --godot "$GODOT_BIN" --project "$RUNNER_TEMP/godot-js-smoke" \
+          --extension res://addons/godot-js/binary/gode.gdextension \
+          --editor-extension res://addons/godot-js/binary/gode_editor.gdextension \
+          --scene res://scenes/lite_probe.tscn \
+          --marker '[GodotJsLiteTest] pure JS npm and hash passed' \
+          --strict-exit-leaks
