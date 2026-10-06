@@ -224,12 +224,12 @@ jobs:
         python test/run_godot_smoke.py \
           --godot "$GODOT_BIN" --project "$RUNNER_TEMP/godot-js-smoke" \
           --extension res://addons/godot-js/binary/gode.gdextension \
-          --editor-extension res://addons/godot-js/binary/gode_editor.gdextension \
+          --editor-template res://addons/godot-js/binary/gode_editor.gdextension.template \
           --strict-exit-leaks
         python test/run_godot_smoke.py \
           --godot "$GODOT_BIN" --project "$RUNNER_TEMP/godot-js-smoke" \
           --extension res://addons/godot-js/binary/gode.gdextension \
-          --editor-extension res://addons/godot-js/binary/gode_editor.gdextension \
+          --editor-template res://addons/godot-js/binary/gode_editor.gdextension.template \
           --scene res://scenes/lite_probe.tscn \
           --marker '[GodotJsLiteTest] pure JS npm and hash passed' \
           --strict-exit-leaks
