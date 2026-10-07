@@ -15,7 +15,8 @@ Gode 的 `example/addons/gode`，再运行该脚本同步。不要在此仓库�
 `godot-js.zip`。正式发布使用与 Gode 相同的版本标签，在对应标签上运行
 `Release` 流水线，构建和测试通过后只发布此插件包。
 
-运行 `Build godot-js Lite`，指定包含对应实现的 `gode_ref` 和
+运行 `Build godot-js Lite`，指定已发布的 Gode 版本号（例如 `2.4.6`）作为
+`gode_ref`，并提供
 `libnode-lite.zip` URL。流水线递归检出 Gode，设置 `GODE_LITE=ON`，构建
 Windows x64、Linux x64、macOS arm64、Android arm64、iOS arm64，生成
 `godot-js.zip` 和 `GODE-SOURCE-COMMIT.txt` artifact。

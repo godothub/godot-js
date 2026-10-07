@@ -3,9 +3,9 @@ name: Build godot-js Lite
   workflow_dispatch:
     inputs:
       gode_ref:
-        description: Gode branch, tag, or commit containing the canonical implementation
+        description: Published Gode release version, for example 2.4.6
         type: string
-        default: main
+        required: true
       libnode_url:
         description: libnode-lite.zip URL
         type: string
@@ -13,9 +13,9 @@ name: Build godot-js Lite
   workflow_call:
     inputs:
       gode_ref:
-        description: Gode branch, tag, or commit containing the canonical implementation
+        description: Published Gode release version, for example 2.4.6
         type: string
-        default: main
+        required: true
       libnode_url:
         description: libnode-lite.zip URL
         type: string
@@ -74,7 +74,7 @@ jobs:
       with:
         submodules: recursive
         repository: godothub/gode
-        ref: ${{ inputs.gode_ref || 'main' }}
+        ref: ${{ inputs.gode_ref }}
     - name: Setup Python
       uses: actions/setup-python@v6
       with:
@@ -125,7 +125,7 @@ jobs:
       with:
         submodules: recursive
         repository: godothub/gode
-        ref: ${{ inputs.gode_ref || 'main' }}
+        ref: ${{ inputs.gode_ref }}
     - name: Setup Python
       uses: actions/setup-python@v6
       with:
@@ -183,7 +183,7 @@ jobs:
       with:
         submodules: recursive
         repository: godothub/gode
-        ref: ${{ inputs.gode_ref || 'main' }}
+        ref: ${{ inputs.gode_ref }}
     - name: Setup Python
       uses: actions/setup-python@v6
       with:
@@ -278,7 +278,7 @@ jobs:
       uses: actions/checkout@v6
       with:
         repository: godothub/gode
-        ref: ${{ inputs.gode_ref || 'main' }}
+        ref: ${{ inputs.gode_ref }}
     - name: Setup Python
       uses: actions/setup-python@v6
       with:
