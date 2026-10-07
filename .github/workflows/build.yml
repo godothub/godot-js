@@ -10,6 +10,16 @@ name: Build godot-js Lite
         description: libnode-lite.zip URL
         type: string
         default: https://github.com/moluopro/libnode/releases/download/24.21.0/libnode-lite.zip
+  workflow_call:
+    inputs:
+      gode_ref:
+        description: Gode branch, tag, or commit containing the canonical implementation
+        type: string
+        default: main
+      libnode_url:
+        description: libnode-lite.zip URL
+        type: string
+        default: https://github.com/moluopro/libnode/releases/download/24.21.0/libnode-lite.zip
 permissions:
   contents: read
 env:

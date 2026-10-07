@@ -1,0 +1,137 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Plain release tag shared with Gode, without v prefix
+        required: true
+        type: string
+      libnode_url:
+        description: Override the default download URL for libnode-lite.zip
+        required: false
+        type: string
+      prerelease:
+        description: Mark the release as a prerelease
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  validate:
+    name: Validate release version and sources
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.release_tag.outputs.tag }}
+
+    steps:
+      - name: Validate release tag
+        id: release_tag
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Release tag must be plain SemVer without a v prefix." >&2
+            exit 1
+          fi
+          if [[ "$GITHUB_REF" != "refs/tags/$RELEASE_TAG" ]]; then
+            echo "Run this workflow from the matching release tag." >&2
+            exit 1
+          fi
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout addon
+        uses: actions/checkout@v6
+
+      - name: Checkout matching Gode release
+        uses: actions/checkout@v6
+        with:
+          repository: godothub/gode
+          ref: ${{ steps.release_tag.outputs.tag }}
+          path: gode
+
+      - name: Check addon versions and submodule revision
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.release_tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          for config in addons/godot-js/plugin.cfg gode/example/addons/gode/plugin.cfg; do
+            if ! grep -Fxq "version=\"$RELEASE_TAG\"" "$config"; then
+              echo "Plugin version does not match $RELEASE_TAG: $config" >&2
+              exit 1
+            fi
+          done
+          addon_commit="$(git -C gode ls-tree HEAD third/godot-js | awk '{print $3}')"
+          if [[ "$addon_commit" != "$GITHUB_SHA" ]]; then
+            echo "Gode does not reference this godot-js release commit." >&2
+            exit 1
+          fi
+
+  build:
+    needs: validate
+    uses: ./.github/workflows/build.yml
+    with:
+      gode_ref: ${{ needs.validate.outputs.tag }}
+      libnode_url: ${{ inputs.libnode_url }}
+
+  publish:
+    name: Publish GitHub release
+    runs-on: ubuntu-latest
+    needs:
+      - validate
+      - build
+
+    steps:
+      - name: Checkout canonical release notes
+        uses: actions/checkout@v6
+        with:
+          repository: godothub/gode
+          ref: ${{ needs.validate.outputs.tag }}
+
+      - name: Download packaged plugin
+        uses: actions/download-artifact@v8
+        with:
+          name: godot-js
+          path: dist
+
+      - name: Verify packaged source and extract release notes
+        id: release_notes
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ needs.validate.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if [[ "$(cat dist/GODE-SOURCE-COMMIT.txt)" != "$(git rev-parse HEAD)" ]]; then
+            echo "Packaged plugin was not built from the matching Gode release." >&2
+            exit 1
+          fi
+          notes_file="$RUNNER_TEMP/release-notes.md"
+          awk -v version="$RELEASE_TAG" '
+            $0 == "## " version { capture = 1; next }
+            capture && /^## / { exit }
+            capture { print }
+          ' CHANGELOG.md | sed '/./,$!d' > "$notes_file"
+          if [ ! -s "$notes_file" ]; then
+            echo "Release notes for $RELEASE_TAG were not found in CHANGELOG.md" >&2
+            exit 1
+          fi
+          echo "path=$notes_file" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.validate.outputs.tag }}
+          name: ${{ needs.validate.outputs.tag }}
+          prerelease: ${{ inputs.prerelease == 'true' }}
+          body_path: ${{ steps.release_notes.outputs.path }}
+          files: dist/godot-js.zip
