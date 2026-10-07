@@ -67,7 +67,7 @@ jobs:
           runner: macos-26
           script: ./shell/build-android.sh --arch arm64 --config Release --fresh
           artifact_path: third/godot-js/addons/godot-js/binary/android/arm64/libgode_runtime.so
-          editor_artifact_path: ''
+          editor_artifact_path: third/godot-js/addons/godot-js/binary/editor/android/arm64/libgode_editor.so
     steps:
     - name: Checkout
       uses: actions/checkout@v6
@@ -232,6 +232,11 @@ jobs:
       with:
         name: godot-js-editor-binary-macos-arm64
         path: third/godot-js/addons/godot-js/binary/editor/macos/arm64
+    - name: Download Android editor
+      uses: actions/download-artifact@v8
+      with:
+        name: godot-js-editor-binary-android-arm64
+        path: third/godot-js/addons/godot-js/binary/editor/android/arm64
     - name: Download Web extension
       uses: actions/download-artifact@v8
       with:
