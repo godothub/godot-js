@@ -28,5 +28,10 @@ Inspector、OpenSSL/crypto/TLS、SQLite、ICU/Intl 和 V8 WebAssembly API。
 依赖这些功能的 npm 包不能使用，仅用 JS 编写并不代表不依赖 Node 系统模块。
 当前库采用 V8 Lite 模式，关闭 JIT；TypeScript 编译器随插件打包。
 
-此流水线当前只产出原生插件。wasm32 Web 导出的 V8/Node 移植尚未完成，
-没有将原生静态库当作 Web 库分发。
+流水线还构建 wasm32 Web 扩展及匹配的 Godot 4.7 导出模板，并用
+真实导出项目在 Chromium 中验证纯 JS npm 包和 Godot API。
+
+Web 导出时启用线程和 GDExtension，将自定义 Release 模板指向
+`addons/godot-js/binary/editor/web/godot.web.template_release.wasm32.dlink.zip`。
+模板与扩展均使用 Emscripten 5.0.7 和 wasm32；服务器需要 COOP/COEP
+响应头。V8 的 WebAssembly API 不参与 Web 导出。
