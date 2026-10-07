@@ -3,7 +3,7 @@ name: Build godot-js Lite
   workflow_dispatch:
     inputs:
       gode_ref:
-        description: Published Gode release version, for example 2.4.6
+        description: Published Gode release version
         type: string
         required: true
       libnode_url:
@@ -13,7 +13,7 @@ name: Build godot-js Lite
   workflow_call:
     inputs:
       gode_ref:
-        description: Published Gode release version, for example 2.4.6
+        description: Published Gode release version
         type: string
         required: true
       libnode_url:
