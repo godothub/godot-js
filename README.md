@@ -12,8 +12,8 @@ Gode 的 `example/addons/gode`，再运行该脚本同步。不要在此仓库�
 ## 构建与安装
 
 发布包可从 [Releases](https://github.com/godothub/godot-js/releases) 下载
-`godot-js.zip`。正式发布使用与 Gode 相同的版本标签，在对应标签上运行
-`Release` 流水线，构建和测试通过后只发布此插件包。
+`godot-js.zip`。Gode 发布后，运行 `Release` 流水线并填写相同版本号；
+构建和测试通过后自动创建版本标签，只发布此插件包。
 
 运行 `Build godot-js Lite`，指定已发布的 Gode 版本号（例如 `2.4.6`）作为
 `gode_ref`，并提供

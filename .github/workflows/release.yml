@@ -43,14 +43,24 @@ jobs:
             echo "Release tag must be plain SemVer without a v prefix." >&2
             exit 1
           fi
-          if [[ "$GITHUB_REF" != "refs/tags/$RELEASE_TAG" ]]; then
-            echo "Run this workflow from the matching release tag." >&2
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Check published Gode release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release_tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if [[ "$(gh release view "$RELEASE_TAG" --repo godothub/gode --json isDraft --jq '.isDraft')" != "false" ]]; then
+            echo "Gode $RELEASE_TAG must be published first." >&2
             exit 1
           fi
-          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Checkout addon
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Checkout matching Gode release
         uses: actions/checkout@v6
@@ -59,7 +69,7 @@ jobs:
           ref: ${{ steps.release_tag.outputs.tag }}
           path: gode
 
-      - name: Check addon versions and submodule revision
+      - name: Check addon versions and distribution files
         shell: bash
         env:
           RELEASE_TAG: ${{ steps.release_tag.outputs.tag }}
@@ -72,8 +82,8 @@ jobs:
             fi
           done
           addon_commit="$(git -C gode ls-tree HEAD third/godot-js | awk '{print $3}')"
-          if [[ "$addon_commit" != "$GITHUB_SHA" ]]; then
-            echo "Gode does not reference this godot-js release commit." >&2
+          if [[ "$(git rev-parse "$addon_commit:addons/godot-js")" != "$(git rev-parse HEAD:addons/godot-js)" ]]; then
+            echo "Addon files do not match the published Gode release." >&2
             exit 1
           fi
 
@@ -132,6 +142,7 @@ jobs:
         with:
           tag_name: ${{ needs.validate.outputs.tag }}
           name: ${{ needs.validate.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           prerelease: ${{ inputs.prerelease == 'true' }}
           body_path: ${{ steps.release_notes.outputs.path }}
           files: dist/godot-js.zip
